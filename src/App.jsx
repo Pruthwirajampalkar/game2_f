@@ -4,8 +4,8 @@ import Room from './pages/Room';
 import { io } from 'socket.io-client';
 import { useState, useEffect } from 'react';
 
-// Connect to backend (automatically connects to same host in production)
-const socketUrl = import.meta.env.PROD ? '/' : 'http://localhost:3001';
+// Connect to backend (use environment variable or default to localhost for development)
+const socketUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 const socket = io(socketUrl);
 
 function App() {
