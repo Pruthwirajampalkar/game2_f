@@ -116,40 +116,70 @@ export default function Room({ socket }) {
 
     return (
         <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 p-2 md:p-6 max-w-[1600px] mx-auto w-full h-[100dvh] md:h-[calc(100vh-80px)]">
-            {/* Mobile Players Toggle */}
-            <div className="md:hidden flex flex-col gap-2 bg-dark-800/80 backdrop-blur rounded-none p-3 border border-dark-600">
-                <div className="flex justify-between items-center">
-                    <button
-                        onClick={() => setShowMobileLobby(!showMobileLobby)}
-                        className="flex items-center gap-2 font-bold text-white bg-dark-900 px-4 py-2 rounded-none border border-dark-700 hover:border-primary-500 transition-colors"
-                    >
-                        <Users size={18} className="text-primary-400" />
-                        Players ({roomData.players.length})
-                    </button>
-                    <div className="flex items-center gap-2">
+            {/* Mobile header */}
+            <div className="md:hidden flex items-center justify-between bg-dark-800/80 backdrop-blur px-3 py-2 border border-dark-600">
+                <button
+                    onClick={() => setShowMobileLobby(!showMobileLobby)}
+                    className="flex items-center gap-2 font-bold text-white"
+                    aria-label="Toggle players list"
+                >
+                    <Users size={18} className="text-primary-400" />
+                    <span className="text-sm">{roomData.players.length}/{roomData.maxPlayers || 8}</span>
+                </button>
+                <div className="flex items-center gap-3">
+                    {roomData.status === 'lobby' && roomData.players[0]?.id === socket.id && (
                         <button
-                            onClick={handleCopyLink}
-                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-primary-400 transition-colors"
-                            title="Copy Invite Link"
+                            onClick={handleStartGame}
+                            className="px-3 py-1 bg-gradient-to-r from-primary-500 to-emerald-500 text-white rounded-none text-xs font-bold"
                         >
-                            Code: {roomId}
-                            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
+                            Start
                         </button>
-                        {roomData.status === 'lobby' && roomData.players[0]?.id === socket.id && (
-                            <button
-                                onClick={handleStartGame}
-                                className="ml-2 px-3 py-1 bg-gradient-to-r from-primary-500 to-emerald-500 text-white rounded-none text-xs font-bold"
-                            >
-                                Start
-                            </button>
-                        )}
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Crown size={18} className="text-yellow-400" />
-                    <span className="font-bold text-white">{roomData.players.find(p => p.id === socket.id)?.score || 0} pts</span>
+                    )}
+                    <button
+                        onClick={handleCopyLink}
+                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-primary-400 transition-colors"
+                        title="Copy Invite Link"
+                    >
+                        {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
+                    </button>
                 </div>
             </div>
+
+            {/* Mobile lobby overlay */}
+            {showMobileLobby && (
+                <div className="fixed inset-0 bg-dark-900/95 z-50 p-4 overflow-y-auto flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-white font-bold text-lg">Players</h2>
+                        <button onClick={() => setShowMobileLobby(false)} className="text-gray-400 text-xl">×</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-3">
+                        {[...roomData.players].sort((a, b) => b.score - a.score).map((player, index) => (
+                            <div
+                                key={player.id}
+                                className={`flex items-center gap-3 p-3 ${player.id === socket.id ? 'text-primary-400' : 'text-white'} ${roomData.guessedPlayers?.includes(player.id) ? 'border-l-4 border-l-green-500' : ''}`}
+                            >
+                                <Avatar seed={player.avatar || player.username} emotion={player.emotion} size={48} className={player.emotion === 'happy' ? 'animate-bounce' : ''} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold truncate flex items-center gap-2">
+                                        {player.username}
+                                        {player.id === socket.id && <span className="text-xs text-primary-400 font-normal">(You)</span>}
+                                        {roomData.players[0]?.id === player.id && <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold">Host</span>}
+                                    </p>
+                                    <p className="text-xs text-gray-400 font-medium">{player.score} pts</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {roomData.status === 'lobby' && roomData.players[0]?.id === socket.id && (
+                        <button
+                            onClick={handleStartGame}
+                            className="mt-4 w-full py-3 bg-gradient-to-r from-primary-500 to-emerald-500 text-white rounded-none font-bold"
+                        >
+                            Start Game
+                        </button>
+                    )}
+                </div>
+            )}
 
             {/* Left Sidebar - Players & Leaderboard */}
             <div className={`${showMobileLobby ? 'flex' : 'hidden'} md:flex w-full md:w-72 flex-col gap-4 shrink-0 h-48 md:h-auto md:self-stretch`}>
