@@ -33,7 +33,7 @@ export default function Chat({ socket, roomId, roomData }) {
     const handleSend = (e) => {
         e.preventDefault();
         if (input.trim()) {
-            socket.emit('guess', { roomId, guess: input.trim() });
+            socket.emit('send_message', { roomId, message: input.trim() });
             setInput('');
         }
     };
@@ -58,7 +58,7 @@ export default function Chat({ socket, roomId, roomData }) {
                     }
                     if (m.username === 'System') return null;
 
-                    const isHost = roomData?.players?.[0]?.username === m.username;
+                    const isHost = roomData?.hostId && roomData?.players?.find(p => p.id === roomData.hostId)?.username === m.username;
                     const isYou = roomData?.players?.find(p => p.id === socket.id)?.username === m.username;
 
                     return (
@@ -79,13 +79,13 @@ export default function Chat({ socket, roomId, roomData }) {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    disabled={roomData?.status !== 'playing'}
-                    placeholder={roomData?.status === 'playing' ? "Type your guess..." : "Waiting for game..."}
+                    disabled={roomData?.status === 'game_over'}
+                    placeholder={roomData?.status === 'game_over' ? "Game over" : "Type your message..."}
                     className="flex-1 px-4 py-2 bg-dark-800 border border-dark-600 rounded-none text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none disabled:opacity-50"
                 />
                 <button
                     type="submit"
-                    disabled={!input.trim() || roomData?.status !== 'playing'}
+                    disabled={!input.trim() || roomData?.status === 'game_over'}
                     className="p-2 bg-primary-500 hover:bg-primary-600 text-white rounded-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shrink-0 w-10 h-10"
                 >
                     <Send size={18} />
