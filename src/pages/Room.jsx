@@ -135,13 +135,21 @@ export default function Room({ socket }) {
                             Start
                         </button>
                     )}
-                    <button
-                        onClick={handleCopyLink}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-primary-400 transition-colors"
-                        title="Copy Invite Link"
-                    >
-                        {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <a
+                            href={`/room/${roomId}`}
+                            className="text-xs text-gray-400 hover:text-primary-400 underline"
+                        >
+                            {roomId}
+                        </a>
+                        <button
+                            onClick={handleCopyLink}
+                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-primary-400 transition-colors"
+                            title="Copy Invite Link"
+                        >
+                            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -256,9 +264,11 @@ export default function Room({ socket }) {
                 <div className="h-14 border-b border-dark-700 bg-dark-800/80 backdrop-blur top-0 flex items-center justify-between px-6 relative z-10 w-full">
                     <div className="flex items-center gap-4">
                         <span className="text-xs font-bold uppercase tracking-widest text-primary-400 border border-primary-500/30 bg-primary-500/10 px-3 py-1 rounded-none">Round {roomData.round || 1} / {roomData.maxRounds || 3}</span>
-                        <div className="hidden md:flex items-center gap-2 bg-dark-900 border border-dark-600 rounded-none px-3 py-1.5 ml-2 group cursor-pointer hover:border-primary-500 transition-colors" onClick={handleCopyLink} title="Copy Invite Link">
-                            <span className="text-xs font-bold text-gray-400 group-hover:text-primary-400 transition-colors">Code: {roomId}</span>
-                            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500 group-hover:text-primary-400 transition-colors" />}
+                        <div className="hidden md:flex items-center gap-2 bg-dark-900 border border-dark-600 rounded-none px-3 py-1.5 ml-2 group transition-colors">
+                            <a href={`/room/${roomId}`} className="text-xs font-bold text-gray-400 hover:text-primary-400 underline">Code: {roomId}</a>
+                            <button onClick={handleCopyLink} title="Copy Invite Link" className="text-gray-400 hover:text-primary-400 transition-colors">
+                                {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
+                            </button>
                         </div>
 
                         {roomData.status === 'lobby' && (
