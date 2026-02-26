@@ -6,18 +6,32 @@ import { useState, useEffect } from 'react';
 
 // Connect to backend (use environment variable or default to localhost for development)
 const socketUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
-const socket = io(socketUrl);
+const socket = io(socketUrl, {
+  transports: ['polling'] // Force HTTP polling, as WebSockets don't work reliably on Vercel Serverless
+});
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
 
   useEffect(() => {
-    socket.on('connect', () => setIsConnected(true));
-    socket.on('disconnect', () => setIsConnected(false));
+    socket.on('connect', () => {
+      console.log('Connected to server via', socket.io.engine.transport.name);
+      setIsConnected(true);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Disconnected from server:', reason);
+      setIsConnected(false);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Connection error:', err.message);
+    });
 
     return () => {
       socket.off('connect');
       socket.off('disconnect');
+      socket.off('connect_error');
     };
   }, []);
 
