@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Canvas from '../components/Canvas';
 import Chat from '../components/Chat';
-import { Users, Crown, Trophy, Play, Palette, Copy, Check, Settings } from 'lucide-react';
+import { Users, Crown, Trophy, Play, Palette, Copy, Check, Settings, X } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 export default function Room({ socket }) {
@@ -14,8 +14,36 @@ export default function Room({ socket }) {
     const [timeLeft, setTimeLeft] = useState(0);
     const [gameOverData, setGameOverData] = useState(null);
     const [roundOverData, setRoundOverData] = useState(null);
-    const username = location.state?.username;
-    const avatar = location.state?.avatar || 'Felix';
+    
+    // Try to get username from location state first, then from stored session
+    const initialUsername = location.state?.username || (() => {
+        try {
+            const session = localStorage.getItem('gameSession');
+            if (session) {
+                const parsed = JSON.parse(session);
+                if (parsed.roomId === roomId) {
+                    return parsed.username;
+                }
+            }
+        } catch (e) {}
+        return '';
+    })();
+
+    const initialAvatar = location.state?.avatar || (() => {
+        try {
+            const session = localStorage.getItem('gameSession');
+            if (session) {
+                const parsed = JSON.parse(session);
+                if (parsed.roomId === roomId) {
+                    return parsed.avatar;
+                }
+            }
+        } catch (e) {}
+        return 'Felix';
+    })();
+
+    const username = initialUsername;
+    const avatar = initialAvatar;
     const [copied, setCopied] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [showMobileLobby, setShowMobileLobby] = useState(false);
@@ -29,10 +57,27 @@ export default function Room({ socket }) {
 
     useEffect(() => {
         if (!username) {
+            // Check if there's a stored session for this room
+            const storedSession = localStorage.getItem('gameSession');
+            if (storedSession) {
+                try {
+                    const session = JSON.parse(storedSession);
+                    if (session.roomId === roomId) {
+                        console.log('Restoring session for room:', roomId);
+                        socket.emit('join_room', { username: session.username, avatar: session.avatar, roomId });
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Failed to restore session:', e);
+                    localStorage.removeItem('gameSession');
+                }
+            }
             navigate('/');
             return;
         }
 
+        // Store current session
+        localStorage.setItem('gameSession', JSON.stringify({ username, avatar, roomId, timestamp: Date.now() }));
         socket.emit('join_room', { username, avatar, roomId });
 
         socket.on('room_update', (data) => {
@@ -78,6 +123,7 @@ export default function Room({ socket }) {
             socket.off('round_ended');
             socket.off('game_over');
             socket.off('room_error');
+            // Don't clear session here - keep it in case of accidental refresh
         };
     }, [socket, username, navigate]);
 
@@ -100,6 +146,11 @@ export default function Room({ socket }) {
         navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleLeaveRoom = () => {
+        localStorage.removeItem('gameSession');
+        navigate('/');
     };
 
     if (!roomData) {
@@ -150,6 +201,13 @@ export default function Room({ socket }) {
                             {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
                         </button>
                     </div>
+                    <button
+                        onClick={handleLeaveRoom}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        title="Leave Room"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
             </div>
 
