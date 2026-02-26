@@ -7,7 +7,14 @@ import { useState, useEffect } from 'react';
 // Connect to backend (use environment variable or default to localhost for development)
 const socketUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 const socket = io(socketUrl, {
-  transports: ['polling'] // Force HTTP polling, as WebSockets don't work reliably on Vercel Serverless
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: 5,
+  transports: ['websocket', 'polling'],
+  autoConnect: true,
+  upgrade: true,
+  rememberUpgrade: false,
 });
 
 function App() {
@@ -15,17 +22,21 @@ function App() {
 
   useEffect(() => {
     socket.on('connect', () => {
-      console.log('Connected to server via', socket.io.engine.transport.name);
+      console.log('✅ Connected to server via', socket.io.engine.transport.name);
       setIsConnected(true);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('Disconnected from server:', reason);
+      console.log('❌ Disconnected from server:', reason);
       setIsConnected(false);
     });
 
     socket.on('connect_error', (err) => {
-      console.error('Connection error:', err.message);
+      console.error('🔌 Connection error:', err.message);
+    });
+
+    socket.on('error', (err) => {
+      console.error('🚨 Socket error:', err);
     });
 
     return () => {
