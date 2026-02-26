@@ -22,7 +22,7 @@ export default function Room({ socket }) {
 
     // automatically display the lobby panel for the host while still in the lobby
     useEffect(() => {
-        if (roomData && roomData.status === 'lobby' && roomData.players[0]?.id === socket.id) {
+        if (roomData && roomData.status === 'lobby' && roomData.hostId === socket.id) {
             setShowMobileLobby(true);
         }
     }, [roomData, socket.id]);
@@ -127,7 +127,7 @@ export default function Room({ socket }) {
                     <span className="text-sm">{roomData.players.length}/{roomData.maxPlayers || 8}</span>
                 </button>
                 <div className="flex items-center gap-3">
-                    {roomData.status === 'lobby' && roomData.players[0]?.id === socket.id && (
+                    {roomData.status === 'lobby' && roomData.hostId === socket.id && (
                         <button
                             onClick={handleStartGame}
                             className="px-3 py-1 bg-gradient-to-r from-primary-500 to-emerald-500 text-white rounded-none text-xs font-bold"
@@ -171,14 +171,14 @@ export default function Room({ socket }) {
                                     <p className="text-sm font-bold truncate flex items-center gap-2">
                                         {player.username}
                                         {player.id === socket.id && <span className="text-xs text-primary-400 font-normal">(You)</span>}
-                                        {roomData.players[0]?.id === player.id && <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold">Host</span>}
+                                        {roomData.hostId === player.id && <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold">Host</span>}
                                     </p>
                                     <p className="text-xs text-gray-400 font-medium">{player.score} pts</p>
                                 </div>
                             </div>
                         ))}
                     </div>
-                    {roomData.status === 'lobby' && roomData.players[0]?.id === socket.id && (
+                    {roomData.status === 'lobby' && roomData.hostId === socket.id && (
                         <button
                             onClick={handleStartGame}
                             className="mt-4 w-full py-3 bg-gradient-to-r from-primary-500 to-emerald-500 text-white rounded-none font-bold"
@@ -220,13 +220,13 @@ export default function Room({ socket }) {
                                     <p className="text-sm font-bold text-white truncate flex items-center gap-2">
                                         {player.username}
                                         {player.id === socket.id && <span className="text-xs text-primary-400 font-normal">(You)</span>}
-                                        {roomData.players[0]?.id === player.id && <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold">Host</span>}
+                                        {roomData.hostId === player.id && <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold">Host</span>}
                                     </p>
                                     <p className="text-xs text-gray-400 font-medium">{player.score} pts</p>
                                 </div>
                                 {index === 0 && player.score > 0 && <Crown size={16} className="text-yellow-400 drop-shadow-md" />}
 
-                                {roomData.players[0]?.id === socket.id && player.id !== socket.id && (
+                                {roomData.hostId === socket.id && player.id !== socket.id && (
                                     <button
                                         onClick={() => handleKickPlayer(player.id)}
                                         title="Kick player"
@@ -241,7 +241,7 @@ export default function Room({ socket }) {
 
 
 
-                    {roomData.status === 'lobby' && roomData.players.length > 0 && roomData.players[0].id === socket.id && (
+                    {roomData.status === 'lobby' && roomData.players.length > 0 && roomData.hostId === socket.id && (
                         <button
                             onClick={handleStartGame}
                             className="mt-4 w-full py-3 bg-gradient-to-r from-primary-500 to-emerald-500 hover:from-primary-600 hover:to-emerald-600 text-white rounded-none font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 transition-transform hover:-translate-y-1"
@@ -285,7 +285,7 @@ export default function Room({ socket }) {
                                     <div className="absolute left-0 top-10 w-48 bg-dark-800 border border-dark-600 rounded-none shadow-2xl p-3 z-50">
                                         <h3 className="text-xs font-bold text-gray-300 uppercase mb-2 flex justify-between items-center">
                                             Settings
-                                            {roomData.players[0]?.id === socket.id && <span className="text-[9px] bg-primary-500/20 text-primary-400 px-1.5 py-0.5 rounded-none">Host</span>}
+                                            {roomData.hostId === socket.id && <span className="text-[9px] bg-primary-500/20 text-primary-400 px-1.5 py-0.5 rounded-none">Host</span>}
                                         </h3>
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center text-xs">
@@ -297,7 +297,7 @@ export default function Room({ socket }) {
                                                         socket.emit('update_settings', { roomId, settings: { maxRounds: parseInt(e.target.value) } });
                                                         setShowSettings(false);
                                                     }}
-                                                    disabled={roomData.players[0]?.id !== socket.id}
+                                                    disabled={roomData.hostId !== socket.id}
                                                 >
                                                     <option value="2">2</option>
                                                     <option value="3">3</option>
@@ -314,7 +314,7 @@ export default function Room({ socket }) {
                                                         socket.emit('update_settings', { roomId, settings: { turnTime: parseInt(e.target.value) } });
                                                         setShowSettings(false);
                                                     }}
-                                                    disabled={roomData.players[0]?.id !== socket.id}
+                                                    disabled={roomData.hostId !== socket.id}
                                                 >
                                                     <option value="30">30</option>
                                                     <option value="45">45</option>
@@ -332,7 +332,7 @@ export default function Room({ socket }) {
                                                         socket.emit('update_settings', { roomId, settings: { maxPlayers: parseInt(e.target.value) } });
                                                         setShowSettings(false);
                                                     }}
-                                                    disabled={roomData.players[0]?.id !== socket.id}
+                                                    disabled={roomData.hostId !== socket.id}
                                                 >
                                                     {[2,3,4,5,6,7,8].map(n => (
                                                         <option key={n} value={n}>{n}</option>
