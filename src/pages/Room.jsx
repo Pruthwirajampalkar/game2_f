@@ -20,6 +20,13 @@ export default function Room({ socket }) {
     const [showSettings, setShowSettings] = useState(false);
     const [showMobileLobby, setShowMobileLobby] = useState(false);
 
+    // automatically display the lobby panel for the host while still in the lobby
+    useEffect(() => {
+        if (roomData && roomData.status === 'lobby' && roomData.players[0]?.id === socket.id) {
+            setShowMobileLobby(true);
+        }
+    }, [roomData, socket.id]);
+
     useEffect(() => {
         if (!username) {
             navigate('/');
@@ -119,14 +126,24 @@ export default function Room({ socket }) {
                         <Users size={18} className="text-primary-400" />
                         Players ({roomData.players.length})
                     </button>
-                    <button
-                        onClick={handleCopyLink}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-primary-400 transition-colors"
-                        title="Copy Invite Link"
-                    >
-                        Code: {roomId}
-                        {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleCopyLink}
+                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-primary-400 transition-colors"
+                            title="Copy Invite Link"
+                        >
+                            Code: {roomId}
+                            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
+                        </button>
+                        {roomData.status === 'lobby' && roomData.players[0]?.id === socket.id && (
+                            <button
+                                onClick={handleStartGame}
+                                className="ml-2 px-3 py-1 bg-gradient-to-r from-primary-500 to-emerald-500 text-white rounded-none text-xs font-bold"
+                            >
+                                Start
+                            </button>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <Crown size={18} className="text-yellow-400" />
@@ -264,6 +281,22 @@ export default function Room({ socket }) {
                                                     <option value="60">60</option>
                                                     <option value="90">90</option>
                                                     <option value="120">120</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-gray-400">Players</span>
+                                                <select
+                                                    className="bg-dark-900 border border-dark-700 rounded-none text-white px-1 py-0.5 text-xs outline-none disabled:opacity-50"
+                                                    value={roomData.maxPlayers || 8}
+                                                    onChange={e => {
+                                                        socket.emit('update_settings', { roomId, settings: { maxPlayers: parseInt(e.target.value) } });
+                                                        setShowSettings(false);
+                                                    }}
+                                                    disabled={roomData.players[0]?.id !== socket.id}
+                                                >
+                                                    {[2,3,4,5,6,7,8].map(n => (
+                                                        <option key={n} value={n}>{n}</option>
+                                                    ))}
                                                 </select>
                                             </div>
                                         </div>
