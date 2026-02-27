@@ -33,7 +33,11 @@ export default function Chat({ socket, roomId, roomData }) {
     const handleSend = (e) => {
         e.preventDefault();
         if (input.trim()) {
-            socket.emit('send_message', { roomId, message: input.trim() });
+            if (roomData?.status === 'playing' && socket.id !== roomData?.currentDrawer) {
+                socket.emit('guess', { roomId, guess: input.trim() });
+            } else {
+                socket.emit('send_message', { roomId, message: input.trim() });
+            }
             setInput('');
         }
     };
