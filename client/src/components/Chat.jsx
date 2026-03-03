@@ -86,7 +86,7 @@ export default function Chat({ socket, roomId, roomData, compact = false }) {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 min-h-0">
+            <div className="flex-1 overflow-y-auto px-2 py-1.5 space-y-0.5 min-h-0">
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center opacity-40 py-8">
                         <MessageCircle size={28} className="text-gray-500 mb-2" />
@@ -102,8 +102,8 @@ export default function Chat({ socket, roomId, roomData, compact = false }) {
                         </div>
                     );
                     if (m.type === 'round') return (
-                        <div key={i} className="px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-center">
-                            <p className="text-yellow-300 text-xs font-semibold">{m.text}</p>
+                        <div key={i} className="px-2 py-1 text-center">
+                            <p className="text-yellow-400 text-[10px] font-semibold">{m.text}</p>
                         </div>
                     );
                     if (m.username === 'System') return (
