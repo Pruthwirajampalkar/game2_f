@@ -20,7 +20,7 @@ export default function Avatar({ seed, emotion = 'default', size = 40, className
     return (
         <div className={`relative rounded-full inline-block ${className}`} style={{ width: size, height: size, perspective: '500px' }}>
             {/* The base container for the avatar with extreme 3D shadows and inner gloss */}
-            <div className="absolute inset-0 rounded-full overflow-hidden shadow-[0_15px_35px_-10px_rgba(0,0,0,0.6)] bg-gradient-to-br from-indigo-500/30 to-purple-500/30 transform transition-transform duration-500 hover:scale-110 hover:rotate-3 group border-2 border-white/20">
+            <div className="absolute inset-0 rounded-full overflow-hidden shadow-[0_15px_35px_-10px_rgba(0,0,0,0.6)] bg-gradient-to-br from-indigo-500/30 to-purple-500/30 transform transition-transform duration-500 hover:scale-110 hover:rotate-3 group">
                 <img
                     src={avatar}
                     alt={`${seed}'s avatar`}

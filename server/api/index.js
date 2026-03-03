@@ -277,7 +277,24 @@ io.on('connection', (socket) => {
   socket.on('join_room', ({ username, avatar, roomId }) => {
     let room = rooms.get(roomId);
 
-    let existingPlayerIndex = room ? room.players.findIndex(p => p.username === username) : -1;
+    // Check if this username is already taken by a DIFFERENT, still-connected socket
+    let finalUsername = username;
+    if (room) {
+      const existing = room.players.find(p => p.username === username);
+      if (existing && existing.id !== socket.id) {
+        // If the old socket is still alive, rename the new joiner
+        const oldSocketAlive = io.sockets.sockets.has(existing.id);
+        if (oldSocketAlive) {
+          // Give new player a unique name suffix
+          let suffix = 2;
+          while (room.players.find(p => p.username === `${username}${suffix}`)) suffix++;
+          finalUsername = `${username}${suffix}`;
+          socket.emit('chat_message', { username: 'System', message: `Name taken — you joined as "${finalUsername}"` });
+        }
+      }
+    }
+
+    let existingPlayerIndex = room ? room.players.findIndex(p => p.username === finalUsername) : -1;
 
     // Apply maxPlayers limit
     if (room && room.players.length >= (room.maxPlayers || 8) && existingPlayerIndex === -1) {
@@ -298,7 +315,7 @@ io.on('connection', (socket) => {
         turnTime: 120,
         maxPlayers: 8,
         hostId: socket.id,
-        hostName: username,
+        hostName: finalUsername,
         status: 'lobby',
         timer: 0,
         timerInterval: null,
@@ -322,15 +339,15 @@ io.on('connection', (socket) => {
         room.guessedPlayers.add(socket.id);
       }
     } else {
-      if (room.hostName === username && !room.hostId) {
+      if (room.hostName === finalUsername && !room.hostId) {
         room.hostId = socket.id;
       }
-      room.players.push({ id: socket.id, username, avatar: avatar || 'Felix', score: 0, emotion: 'default' });
+      room.players.push({ id: socket.id, username: finalUsername, avatar: avatar || 'Felix', score: 0, emotion: 'default' });
     }
 
     const roomData = { ...room, timerInterval: null, guessedPlayers: Array.from(room.guessedPlayers || []), hostId: room.hostId };
     io.to(roomId).emit('room_update', roomData);
-    console.log(`${username} joined room ${roomId}`);
+    console.log(`${finalUsername} joined room ${roomId}`);
 
     // auto-start logic: when the number of players equals maxPlayers in lobby
     if (room.status === 'lobby' && room.players.length === (room.maxPlayers || 2)) {
@@ -369,7 +386,6 @@ io.on('connection', (socket) => {
       if (settings.maxPlayers) room.maxPlayers = settings.maxPlayers;
       const roomData = { ...room, timerInterval: null, guessedPlayers: Array.from(room.guessedPlayers || []), hostId: room.hostId };
       io.to(roomId).emit('room_update', roomData);
-      // if current count already meets new limit, start immediately
       if (room.players.length === room.maxPlayers) {
         console.log(`Auto-start after setting change in room ${roomId}`);
         room.round = 1;
@@ -405,10 +421,8 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (!room || room.status !== 'playing' || !room.currentWord) return;
 
-    // Reject drawer guessing
     if (socket.id === room.currentDrawer) return;
 
-    // Reject already guessed
     if (room.guessedPlayers.has(socket.id)) {
       socket.emit('chat_message', { username: 'System', message: 'You already guessed it!' });
       return;
@@ -425,15 +439,10 @@ io.on('connection', (socket) => {
 
       const drawer = room.players.find(p => p.id === room.currentDrawer);
       const totalTime = room.turnTime || 120;
-      const totalGuessers = room.players.length - 1; // everyone except drawer
+      const totalGuessers = room.players.length - 1;
 
-      // --- Skribbl.io-style scoring ---
-      // Guesser: 50-550 points based on how fast they guess
       const timeRatio = Math.max(0, room.timer / totalTime);
       const guesserPoints = Math.floor(500 * timeRatio) + 50;
-
-      // Drawer: gets proportional points per correct guess
-      // More guessers = more total drawer points (rewarding good drawings)
       const drawerPoints = Math.max(25, Math.floor(guesserPoints / totalGuessers));
 
       if (player && drawer) {
@@ -450,7 +459,6 @@ io.on('connection', (socket) => {
       const roomData = { ...room, timerInterval: null, guessedPlayers: Array.from(room.guessedPlayers) };
       io.to(roomId).emit('room_update', roomData);
 
-      // If all guessers guessed it, end round immediately
       if (room.guessedPlayers.size === totalGuessers && totalGuessers > 0) {
         endRound(roomId, room);
       }
@@ -458,7 +466,6 @@ io.on('connection', (socket) => {
     } else {
       io.to(roomId).emit('chat_message', { username: player?.username || 'Unknown', message: guessStr });
 
-      // Send close guess hint
       if (distance <= 2 && room.currentWord.length > 3) {
         socket.emit('chat_message', { username: 'System', message: `'${guessStr}' is very close!` });
         if (player) {
@@ -480,12 +487,10 @@ io.on('connection', (socket) => {
           const disconnectedPlayer = room.players[index];
           room.players.splice(index, 1);
 
-          // Remove from drawer queue
           room.drawerQueue = room.drawerQueue.filter(id => id !== socket.id);
 
           console.log(`Player ${disconnectedPlayer.username} (${socket.id}) left room ${roomId}`);
 
-          // reassign host if needed
           if (wasHost) {
             room.hostId = room.players[0]?.id || null;
             room.hostName = room.players[0]?.username || null;
@@ -497,7 +502,6 @@ io.on('connection', (socket) => {
             rooms.delete(roomId);
             console.log(`Room ${roomId} cleared (0 players)`);
           } else {
-            // If drawer left while drawing, end round
             if (room.status === 'playing' && room.currentDrawer === socket.id) {
               io.to(roomId).emit('chat_message', { username: 'System', message: 'Drawer disconnected!' });
               endRound(roomId, room);
@@ -513,6 +517,7 @@ io.on('connection', (socket) => {
     }
   });
 });
+
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT} at 0.0.0.0`);

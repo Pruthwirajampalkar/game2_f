@@ -127,23 +127,25 @@ export default function Room({ socket }) {
                 {(roomData.status === 'playing' || roomData.status === 'choosing_word') && (
                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-mono font-black text-xs border shrink-0 transition-colors ${timerDanger ? 'bg-red-500/10 text-red-400 border-red-500/30 animate-pulse' : 'bg-dark-700 text-primary-400 border-dark-600'}`}>
                         ⏱{timeLeft}s
-                        <div className="w-10 h-1 bg-dark-600 rounded-full overflow-hidden hidden sm:block">
-                            <div className={`h-full rounded-full transition-all duration-1000 ${timerDanger ? 'bg-red-500' : 'bg-primary-500'}`} style={{ width: `${timerPct}%` }} />
+                        <div className="w-10 h-1 bg-dark-600 overflow-hidden hidden sm:block">
+                            <div className={`h-full transition-all duration-1000 ${timerDanger ? 'bg-red-500' : 'bg-primary-500'}`} style={{ width: `${timerPct}%` }} />
                         </div>
                     </div>
                 )}
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
-                    {/* Room code */}
+                    {/* Room code — desktop: pill with code+icon; mobile: compact pill */}
                     <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-dark-700 rounded-lg border border-dark-600">
                         <span className="text-xs font-mono font-bold text-gray-300">{roomId}</span>
                         <button onClick={handleCopyLink} className="text-gray-500 hover:text-primary-400 transition-colors">
                             {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
                         </button>
                     </div>
-                    <button onClick={handleCopyLink} className="sm:hidden w-7 h-7 bg-dark-700 text-gray-400 hover:text-primary-400 rounded-lg flex items-center justify-center border border-dark-600">
-                        {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                    {/* Mobile room code pill */}
+                    <button onClick={handleCopyLink} className="sm:hidden flex items-center gap-1 px-2 py-1 bg-dark-700 text-gray-300 rounded-lg border border-dark-600">
+                        <span className="text-[10px] font-mono font-bold">{roomId}</span>
+                        {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} className="text-gray-500" />}
                     </button>
 
                     {/* Settings */}
@@ -230,7 +232,7 @@ export default function Room({ socket }) {
                 </div>
 
                 {/* ══ DESKTOP: chat right ══ */}
-                <div className="hidden md:flex w-64 shrink-0 flex-col border-l border-white/5">
+                <div className="hidden md:flex w-80 shrink-0 flex-col border-l border-white/5">
                     <Chat socket={socket} roomId={roomId} roomData={roomData} />
                 </div>
 
@@ -246,8 +248,8 @@ export default function Room({ socket }) {
                     {/* Zone 2: Players + Chat side by side — bottom ~45% */}
                     <div className="flex border-t border-white/5 overflow-hidden" style={{ flex: '0 0 45%' }}>
 
-                        {/* Players — left half */}
-                        <div className="flex flex-col w-1/2 border-r border-white/5 overflow-hidden bg-dark-800/40">
+                        {/* Players — left 2/5 */}
+                        <div className="flex flex-col w-2/5 border-r border-white/5 overflow-hidden bg-dark-800/40">
                             <div className="px-2 py-1.5 border-b border-white/5 shrink-0 flex items-center justify-between">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                                     Players <span className="text-primary-400">{roomData.players.length}</span>
@@ -288,8 +290,8 @@ export default function Room({ socket }) {
                             </div>
                         </div>
 
-                        {/* Chat — right half */}
-                        <div className="flex flex-col w-1/2 min-h-0 overflow-hidden">
+                        {/* Chat — right 3/5 */}
+                        <div className="flex flex-col w-3/5 min-h-0 overflow-hidden">
                             <Chat socket={socket} roomId={roomId} roomData={roomData} compact />
                         </div>
                     </div>

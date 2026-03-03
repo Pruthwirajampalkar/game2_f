@@ -52,8 +52,8 @@ export default function Home({ socket }) {
                 <div className="flex justify-center mb-6">
                     <div className="relative">
                         <Avatar seed={selectedAvatar} size={88} />
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-full border-2 border-dark-800 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-lg flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white animate-pulse" />
                         </div>
                     </div>
                 </div>
