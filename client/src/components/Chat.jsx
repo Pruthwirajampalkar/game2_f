@@ -107,8 +107,8 @@ export default function Chat({ socket, roomId, roomData, compact = false }) {
                         </div>
                     );
                     if (m.username === 'System') return (
-                        <div key={i} className="px-3 py-1.5 bg-white/5 rounded-xl text-center">
-                            <p className="text-gray-400 text-xs">{m.message}</p>
+                        <div key={i} className="px-3 py-1 text-center">
+                            <p className="text-gray-500 text-[10px] italic">{m.message}</p>
                         </div>
                     );
                     return (
