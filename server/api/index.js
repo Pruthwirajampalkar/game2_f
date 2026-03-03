@@ -440,10 +440,18 @@ io.on('connection', (socket) => {
       const drawer = room.players.find(p => p.id === room.currentDrawer);
       const totalTime = room.turnTime || 120;
       const totalGuessers = room.players.length - 1;
+      const guessOrder = room.guessedPlayers.size; // 1 = first guesser
 
+      // Skribbl.io-style scoring:
+      // Max 800 pts based on time remaining, min 100 pts
+      // First guesser gets +100 bonus
       const timeRatio = Math.max(0, room.timer / totalTime);
-      const guesserPoints = Math.floor(500 * timeRatio) + 50;
-      const drawerPoints = Math.max(25, Math.floor(guesserPoints / totalGuessers));
+      const basePoints = Math.max(100, Math.round(800 * timeRatio));
+      const firstBonus = guessOrder === 1 ? 100 : 0;
+      const guesserPoints = basePoints + firstBonus;
+
+      // Drawer gets +10 per guesser, capped at +40 per round
+      const drawerPoints = Math.min(40, 10 * guessOrder);
 
       if (player && drawer) {
         player.score += guesserPoints;
@@ -454,7 +462,8 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('correct_guess', {
         username: player?.username || 'Unknown',
         points: guesserPoints,
-        drawerPoints: drawerPoints
+        drawerPoints: drawerPoints,
+        isFirst: guessOrder === 1
       });
       const roomData = { ...room, timerInterval: null, guessedPlayers: Array.from(room.guessedPlayers) };
       io.to(roomId).emit('room_update', roomData);
@@ -467,7 +476,7 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('chat_message', { username: player?.username || 'Unknown', message: guessStr });
 
       if (distance <= 2 && room.currentWord.length > 3) {
-        socket.emit('chat_message', { username: 'System', message: `'${guessStr}' is very close!` });
+        socket.emit('chat_message', { username: 'System', message: `'${guessStr}' is very close! 🔥` });
         if (player) {
           player.emotion = 'curious';
           const roomData = { ...room, timerInterval: null, guessedPlayers: Array.from(room.guessedPlayers) };

@@ -14,12 +14,13 @@ export default function Chat({ socket, roomId, roomData, compact = false }) {
             setMessages(p => [...p, { type: 'chat', username, message }]);
         });
 
-        socket.on('correct_guess', ({ username, points }) => {
-            const pointsText = points ? ` +${points} pts` : '';
+        socket.on('correct_guess', ({ username, points, isFirst }) => {
+            const pointsText = points ? `+${points} pts` : '';
             setMessages(p => [...p, {
                 type: 'correct',
                 text: `🎉 ${username} guessed it!`,
-                sub: pointsText
+                sub: pointsText,
+                isFirst
             }]);
         });
 
@@ -94,9 +95,10 @@ export default function Chat({ socket, roomId, roomData, compact = false }) {
                 )}
                 {messages.map((m, i) => {
                     if (m.type === 'correct') return (
-                        <div key={i} className="flex items-center gap-2 px-3 py-2 bg-primary-500/10 border border-primary-500/20 rounded-xl">
-                            <p className="text-primary-300 text-xs font-semibold flex-1">{m.text}</p>
-                            {m.sub && <span className="text-primary-400 text-xs font-bold shrink-0">{m.sub}</span>}
+                        <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${m.isFirst ? 'bg-yellow-500/15 border-yellow-500/30' : 'bg-primary-500/10 border-primary-500/20'}`}>
+                            {m.isFirst && <span className="text-yellow-400 text-xs font-black shrink-0">1st!</span>}
+                            <p className={`text-xs font-semibold flex-1 ${m.isFirst ? 'text-yellow-200' : 'text-primary-300'}`}>{m.text}</p>
+                            {m.sub && <span className={`text-xs font-black shrink-0 ${m.isFirst ? 'text-yellow-400' : 'text-green-400'}`}>{m.sub}</span>}
                         </div>
                     );
                     if (m.type === 'round') return (

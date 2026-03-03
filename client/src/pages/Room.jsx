@@ -420,11 +420,70 @@ function HintDisplay({ socket }) {
         socket.on('word_hint', (h) => setHint(h));
         return () => socket.off('word_hint');
     }, [socket]);
-    const count = hint ? (hint.match(/[_a-zA-Z]/g) || []).length : 0;
+
+    if (!hint) {
+        return (
+            <div className="flex items-center gap-2 bg-dark-900 px-2.5 py-1 rounded-xl border border-dark-600">
+                <span className="text-gray-500 text-xs font-bold">Waiting for word...</span>
+            </div>
+        );
+    }
+
+    // Parse hint: server sends "_ _ _ " or "a _ _ " with spaces after each char
+    // Split by double-space to handle multi-word or just split chars
+    const rawChars = hint.trim().split(' ').filter(c => c.length > 0);
+    // Group into word segments (split on non-letter, non-underscore chars like '-')
+    const segments = [];
+    let current = [];
+    for (const ch of rawChars) {
+        if (ch === '-' || ch === '/') {
+            if (current.length > 0) segments.push({ chars: current, sep: ch });
+            current = [];
+        } else {
+            current.push(ch);
+        }
+    }
+    if (current.length > 0) segments.push({ chars: current, sep: null });
+
+    const totalLetters = rawChars.filter(c => c === '_' || c.match(/[a-zA-Z]/)).length;
+    const isMultiWord = segments.length > 1;
+
     return (
-        <div className="flex items-center gap-2 bg-dark-900 px-2.5 py-1 rounded-xl border border-dark-600 max-w-full overflow-hidden">
-            <span className="font-mono text-xs md:text-sm font-black tracking-[0.2em] text-white truncate">{hint || '???'}</span>
-            {hint && <span className="text-[10px] text-primary-400 border-l border-dark-700 pl-2 shrink-0">{count}L</span>}
+        <div className="flex items-center gap-2 bg-dark-900 px-3 py-1.5 rounded-xl border border-dark-600 max-w-full overflow-x-auto">
+            {/* Word segments */}
+            <div className="flex items-end gap-3 shrink-0">
+                {segments.map((seg, si) => (
+                    <div key={si} className="flex flex-col items-center gap-0.5">
+                        {/* Letter boxes */}
+                        <div className="flex items-end gap-1">
+                            {seg.chars.map((ch, ci) => {
+                                const isRevealed = ch !== '_';
+                                return (
+                                    <div key={ci} className="flex flex-col items-center gap-0.5">
+                                        <span className={`text-sm md:text-base font-black w-5 text-center leading-none ${isRevealed ? 'text-primary-300' : 'text-transparent'}`}>
+                                            {isRevealed ? ch.toUpperCase() : 'X'}
+                                        </span>
+                                        <div className={`w-5 h-0.5 rounded-full ${isRevealed ? 'bg-primary-400' : 'bg-gray-500'}`} />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {/* Per-segment letter count */}
+                        {isMultiWord && (
+                            <span className="text-[9px] text-gray-600 font-bold mt-0.5">
+                                {seg.chars.filter(c => c === '_' || c.match(/[a-zA-Z]/)).length}
+                            </span>
+                        )}
+                        {/* Separator */}
+                        {seg.sep && <span className="text-gray-500 text-xs font-bold self-center ml-1">{seg.sep}</span>}
+                    </div>
+                ))}
+            </div>
+            {/* Total letter count badge */}
+            <div className="flex flex-col items-center shrink-0 border-l border-dark-700 pl-2 ml-1">
+                <span className="text-[10px] text-gray-500 leading-none">letters</span>
+                <span className="text-primary-400 font-black text-base leading-none">{totalLetters}</span>
+            </div>
         </div>
     );
 }
