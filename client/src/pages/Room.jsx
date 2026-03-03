@@ -427,13 +427,7 @@ function HintDisplay({ socket, compact = false }) {
         return () => socket.off('word_hint');
     }, [socket]);
 
-    if (!hint) {
-        return (
-            <div className="flex items-center gap-2 px-2.5 py-1">
-                <span className="text-gray-500 text-xs font-bold">Waiting for word...</span>
-            </div>
-        );
-    }
+    if (!hint) return null;
 
     // Parse hint: server sends "_ _ _ " or "a _ _ " with spaces after each char
     const rawChars = hint.trim().split(' ').filter(c => c.length > 0);
